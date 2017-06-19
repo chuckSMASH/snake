@@ -16,14 +16,14 @@ use piston::input::keyboard::Key;
 use piston::window::{ Size, Window as PistonWindow, WindowSettings };
 
 use objects::Direction;
-// use objects::Grid;
+use objects::Grid;
+use objects::Snake;
 
 
 pub struct Game {
     gl: GlGraphics,
-    direction: Direction,
-    x: f64,
-    y: f64,
+    snake: Snake,
+    grid: Grid,
 }
 
 
@@ -31,17 +31,17 @@ impl Game {
     fn on_press(&mut self, e: &Input) {
         if let Some(Button::Keyboard(key)) = e.press_args() {
             match key {
-                Key::Up if self.direction != Direction::Down => {
-                    self.direction = Direction::Up;
+                Key::Up if self.snake.direction() != Direction::Down => {
+                    self.snake.set_direction(Direction::Up);
                 },
-                Key::Right if self.direction != Direction::Left => {
-                    self.direction = Direction::Right;
+                Key::Right if self.snake.direction() != Direction::Left => {
+                    self.snake.set_direction(Direction::Right);
                 },
-                Key::Down if self.direction != Direction::Up => {
-                    self.direction = Direction::Down;
+                Key::Down if self.snake.direction() != Direction::Up => {
+                    self.snake.set_direction(Direction::Down);
                 }
-                Key::Left if self.direction != Direction::Right => {
-                    self.direction = Direction::Left;
+                Key::Left if self.snake.direction() != Direction::Right => {
+                    self.snake.set_direction(Direction::Left);
                 },
                 _ => {}
             }
@@ -49,33 +49,28 @@ impl Game {
     }
 
     fn on_update(&mut self) {
-        match self.direction {
-            Direction::Up => {
-                self.y = f64::max(self.y - 10f64, 0f64);
-            },
-            Direction::Right => {
-                self.x = f64::min(self.x + 10f64, 800f64);
-            },
-            Direction::Down => {
-                self.y = f64::min(self.y + 10f64, 800f64);
-            },
-            Direction::Left => {
-                self.x = f64::max(self.x - 10f64, 0f64);
-            },
-            _ => {}
-        }
+        self.snake.traverse(&self.grid);
     }
 
     fn on_render(&mut self, e: &Input) {
         const WHITE: [f32; 4] = [1.0, 1.0, 1.0, 1.0];
+        const BLACK: [f32; 4] = [0.0, 0.0, 0.0, 1.0];
+        const TRANSPARENT: [f32; 4] = [0.0, 0.0, 0.0, 0.0];
+        const SQUARE_SIZE: f64 = 20.0;
 
         let args = e.render_args().unwrap();
-        let square = rectangle::square(self.x, self.y, 200.0);
+        let squares = self.snake.squares().iter();
         let snake_color = hex("3c53a0");
 
         self.gl.draw(args.viewport(), |c, gl| {
-            clear(WHITE, gl);
-            rectangle(snake_color, square, c.transform, gl);
+            clear(BLACK, gl);
+            rectangle(WHITE, [300.0, 300.0, 400.0, 300.0], c.transform, gl);
+            for square in squares {
+                let top_left_x = (square.x() as f64) * SQUARE_SIZE + 300.0;
+                let top_left_y = (square.y() as f64) * SQUARE_SIZE + 300.0;
+                rectangle(snake_color, [top_left_x, top_left_y, SQUARE_SIZE, SQUARE_SIZE],
+                          c.transform, gl);
+            }
         });
     }
 
@@ -91,12 +86,11 @@ impl Game {
         let Size { width, height } = window.size();
         let mut game = Game {
             gl: GlGraphics::new(opengl),
-            direction: Direction::NoDirection,
-            x: (width as f64 / 2f64) - 100f64,
-            y: (height as f64 / 2f64) - 100f64
+            grid: Grid::new(20, 15),
+            snake: Snake::new(10, 10),
         };
         let mut settings = EventSettings::new();
-        settings.set_ups(30);
+        settings.set_ups(5);
         settings.set_max_fps(30);
         let mut events = Events::new(settings);
         while let Some(e) = events.next(&mut window) {
