@@ -73,6 +73,8 @@ impl Game {
 
         self.gl.draw(args.viewport(), |c, gl| {
             clear(BLACK, gl);
+
+            rectangle(snake_color, [200.0, 270.0, 600.0, 30.0], c.transform, gl);
             rectangle(WHITE, [200.0, 300.0, 600.0, 450.0], c.transform, gl);
 
             let food_tlx = (food.get_square().x() as f64) * SQUARE_SIZE + 205.0;
