@@ -101,6 +101,16 @@ impl Snake {
         true
     }
 
+    pub fn eats(&mut self, food: &Food) -> bool {
+        match self.collides(&food.square) {
+            true => {
+                self.pending += food.segments;
+                true
+            },
+            false => false
+        }
+    }
+
     pub fn squares(&self) -> &VecDeque<Square> {
         &self.squares
     }
