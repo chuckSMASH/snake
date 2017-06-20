@@ -53,6 +53,10 @@ impl Game {
 
     fn on_update(&mut self) {
         self.snake.traverse(&self.grid);
+        if self.snake.eats(&self.food) {
+            self.score += self.food.points();
+            self.food = Food::generate(&self.grid, &self.snake);
+        }
     }
 
     fn on_render(&mut self, e: &Input) {
