@@ -25,8 +25,9 @@ use objects::Grid;
 use objects::Snake;
 
 
-pub struct Game {
+pub struct Game<'a> {
     gl: GlGraphics,
+    font_cache: GlyphCache<'a>,
     snake: Snake,
     food: Food,
     grid: Grid,
@@ -34,7 +35,7 @@ pub struct Game {
 }
 
 
-impl Game {
+impl<'a> Game<'a> {
     fn on_press(&mut self, e: &Input) {
         if let Some(Button::Keyboard(key)) = e.press_args() {
             match key {
@@ -63,7 +64,7 @@ impl Game {
         }
     }
 
-    fn on_render(&mut self, e: &Input, cache: &mut GlyphCache) {
+    fn on_render(&mut self, e: &Input) {
         const WHITE: [f32; 4] = [1.0, 1.0, 1.0, 1.0];
         const BLACK: [f32; 4] = [0.0, 0.0, 0.0, 1.0];
         const SQUARE_SIZE: f64 = 30.0;
@@ -74,6 +75,7 @@ impl Game {
         let food = &self.food;
         let snake_color = hex("3c53a0");
         let score = format!("{: >4}", self.score);
+        let ref mut font_cache = self.font_cache;
 
         self.gl.draw(args.viewport(), |c, gl| {
             clear(BLACK, gl);
@@ -83,7 +85,8 @@ impl Game {
 
             let text_trans = c.transform.trans(750.0, 295.0);
             let text = Text::new_color(WHITE, 20);
-            text.draw(&score, cache, &c.draw_state, text_trans, gl);
+            text.draw(&score, font_cache, &c.draw_state,
+                      text_trans, gl);
 
 
 
@@ -112,13 +115,13 @@ impl Game {
             .unwrap();
 
         let font_path = Path::new("assets/Verdana.ttf");
-        let mut cache = GlyphCache::new(font_path).unwrap();
-
         let grid = Grid::new(20, 15);
         let snake = Snake::new(10, 10);
         let food = Food::generate(&grid, &snake);
+        let font_cache = GlyphCache::new(font_path).unwrap();
         let mut game = Game {
             gl: GlGraphics::new(opengl),
+            font_cache: font_cache,
             grid: grid,
             snake: snake,
             food: food,
@@ -131,7 +134,7 @@ impl Game {
         while let Some(e) = events.next(&mut window) {
             match e {
                 Input::Render(_) => {
-                    game.on_render(&e, &mut cache);
+                    game.on_render(&e);
                 },
                 Input::Press(_) => {
                     game.on_press(&e);
