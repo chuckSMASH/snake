@@ -27,6 +27,7 @@ pub struct Game {
     snake: Snake,
     food: Food,
     grid: Grid,
+    score: u32,
 }
 
 
@@ -105,6 +106,7 @@ impl Game {
             grid: grid,
             snake: snake,
             food: food,
+            score: 0,
         };
         let mut settings = EventSettings::new();
         settings.set_ups(10);
