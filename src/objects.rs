@@ -1,6 +1,8 @@
 use std::collections::VecDeque;
 use std::iter;
 
+use rand::{thread_rng, sample};
+
 #[derive(Copy, Clone, PartialEq)]
 pub enum Direction {
     Up,
@@ -32,6 +34,37 @@ impl Square {
     }
     pub fn y(&self) -> u32 {
         self.y
+    }
+}
+
+
+pub struct Food {
+    square: Square,
+    points: u32,
+    segments: u32,
+}
+
+
+impl Food {
+    pub fn generate(on_grid: &Grid, with_snake: &Snake) -> Food {
+        let mut rng = thread_rng();
+        let free_squares = on_grid.squares.iter()
+            .filter(|s| !with_snake.collides(s));
+        let sample = sample(&mut rng, free_squares, 1);
+        let square = sample.get(0).unwrap();
+        Food {
+            square: Square { x: square.x, y: square.y },
+            points: 5u32,
+            segments: 3u32,
+        }
+    }
+
+    pub fn points(&self) -> u32 {
+        self.points
+    }
+
+    pub fn get_square(&self) -> &Square {
+        &self.square
     }
 }
 
