@@ -7,10 +7,13 @@ extern crate opengl_graphics;
 mod objects;
 
 
-use graphics::{ clear, ellipse, rectangle };
+use std::path::Path;
+
+use graphics::{ clear, ellipse, rectangle, Text, Transformed };
 use graphics::color::hex;
 use glutin_window::GlutinWindow as Window;
 use opengl_graphics::{ GlGraphics, OpenGL };
+use opengl_graphics::glyph_cache::GlyphCache;
 use piston::event_loop::{ Events, EventLoop, EventSettings };
 use piston::input::{ Button, RenderEvent, PressEvent, Input };
 use piston::input::keyboard::Key;
@@ -60,7 +63,7 @@ impl Game {
         }
     }
 
-    fn on_render(&mut self, e: &Input) {
+    fn on_render(&mut self, e: &Input, cache: &mut GlyphCache) {
         const WHITE: [f32; 4] = [1.0, 1.0, 1.0, 1.0];
         const BLACK: [f32; 4] = [0.0, 0.0, 0.0, 1.0];
         const SQUARE_SIZE: f64 = 30.0;
@@ -70,12 +73,19 @@ impl Game {
         let squares = self.snake.squares().iter();
         let food = &self.food;
         let snake_color = hex("3c53a0");
+        let score = format!("{: >4}", self.score);
 
         self.gl.draw(args.viewport(), |c, gl| {
             clear(BLACK, gl);
 
             rectangle(snake_color, [200.0, 270.0, 600.0, 30.0], c.transform, gl);
             rectangle(WHITE, [200.0, 300.0, 600.0, 450.0], c.transform, gl);
+
+            let text_trans = c.transform.trans(750.0, 295.0);
+            let text = Text::new_color(WHITE, 20);
+            text.draw(&score, cache, &c.draw_state, text_trans, gl);
+
+
 
             let food_tlx = (food.get_square().x() as f64) * SQUARE_SIZE + 205.0;
             let food_tly = (food.get_square().y() as f64) * SQUARE_SIZE + 305.0;
@@ -100,6 +110,10 @@ impl Game {
             .exit_on_esc(true)
             .build()
             .unwrap();
+
+        let font_path = Path::new("assets/Verdana.ttf");
+        let mut cache = GlyphCache::new(font_path).unwrap();
+
         let grid = Grid::new(20, 15);
         let snake = Snake::new(10, 10);
         let food = Food::generate(&grid, &snake);
@@ -117,7 +131,7 @@ impl Game {
         while let Some(e) = events.next(&mut window) {
             match e {
                 Input::Render(_) => {
-                    game.on_render(&e);
+                    game.on_render(&e, &mut cache);
                 },
                 Input::Press(_) => {
                     game.on_press(&e);
