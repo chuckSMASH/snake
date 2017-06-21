@@ -123,6 +123,14 @@ impl Snake {
         self.direction = dir;
     }
 
+    pub fn drain(&mut self) -> bool {
+        self.pending = 5;
+        if self.squares.len() > 1 {
+            self.squares.pop_front();
+        }
+        self.squares.len() == 1
+    }
+
     fn collides(&self, other: &Square) -> bool {
         self.squares.contains(other)
     }
