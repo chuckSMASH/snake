@@ -89,7 +89,7 @@ impl Snake {
 
     pub fn traverse(&mut self, on_grid: &Grid) -> bool {
         let next = on_grid.next_square(self.squares.back().unwrap(), self.direction);
-        if self.collides(&next) {
+        if self.collides(&next) && self.direction != Direction::NoDirection {
             return false
         }
         self.squares.push_back(next);
