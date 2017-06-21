@@ -7,6 +7,7 @@ extern crate opengl_graphics;
 mod objects;
 
 
+use std::cmp::min;
 use std::path::Path;
 
 use graphics::{ clear, ellipse, rectangle, Text, Transformed };
@@ -29,6 +30,7 @@ pub struct Game<'a> {
     gl: GlGraphics,
     font_cache: GlyphCache<'a>,
     pending_direction: Option<Direction>,
+    game_over: bool,
     snake: Snake,
     food: Food,
     grid: Grid,
@@ -38,6 +40,9 @@ pub struct Game<'a> {
 
 impl<'a> Game<'a> {
     fn on_press(&mut self, e: &Input) {
+        if self.game_over {
+            return
+        }
         if let Some(Button::Keyboard(key)) = e.press_args() {
             match key {
                 Key::Up if self.snake.direction() != Direction::Down => {
@@ -58,11 +63,18 @@ impl<'a> Game<'a> {
     }
 
     fn on_update(&mut self) {
+        if self.game_over {
+            self.on_game_over();
+            return;
+        }
         if let Some(direction) = self.pending_direction {
             self.pending_direction = None;
             self.snake.set_direction(direction);
         };
-        self.snake.traverse(&self.grid);
+        let moved = self.snake.traverse(&self.grid);
+        if !moved {
+            self.game_over = true;
+        }
         if self.snake.eats(&self.food) {
             self.score += self.food.points();
             self.food = Food::generate(&self.grid, &self.snake);
@@ -109,6 +121,17 @@ impl<'a> Game<'a> {
         });
     }
 
+    pub fn on_game_over(&mut self) {
+        if self.score > 0 {
+            self.score -= min(2, self.score);
+        }
+        let drained = self.snake.drain();
+        if self.score == 0 && drained {
+            self.snake.set_direction(Direction::NoDirection);
+            self.game_over = false;
+        }
+    }
+
     pub fn run() {
         let opengl = OpenGL::V3_2;
         let mut window: Window = WindowSettings::new(
@@ -128,6 +151,7 @@ impl<'a> Game<'a> {
             gl: GlGraphics::new(opengl),
             font_cache: font_cache,
             pending_direction: None,
+            game_over: false,
             grid: grid,
             snake: snake,
             food: food,
