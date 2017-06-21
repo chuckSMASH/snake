@@ -28,6 +28,7 @@ use objects::Snake;
 pub struct Game<'a> {
     gl: GlGraphics,
     font_cache: GlyphCache<'a>,
+    pending_direction: Option<Direction>,
     snake: Snake,
     food: Food,
     grid: Grid,
@@ -40,16 +41,16 @@ impl<'a> Game<'a> {
         if let Some(Button::Keyboard(key)) = e.press_args() {
             match key {
                 Key::Up if self.snake.direction() != Direction::Down => {
-                    self.snake.set_direction(Direction::Up);
+                    self.pending_direction = Some(Direction::Up);
                 },
                 Key::Right if self.snake.direction() != Direction::Left => {
-                    self.snake.set_direction(Direction::Right);
+                    self.pending_direction = Some(Direction::Right);
                 },
                 Key::Down if self.snake.direction() != Direction::Up => {
-                    self.snake.set_direction(Direction::Down);
+                    self.pending_direction = Some(Direction::Down);
                 }
                 Key::Left if self.snake.direction() != Direction::Right => {
-                    self.snake.set_direction(Direction::Left);
+                    self.pending_direction = Some(Direction::Left);
                 },
                 _ => {}
             }
@@ -57,6 +58,10 @@ impl<'a> Game<'a> {
     }
 
     fn on_update(&mut self) {
+        if let Some(direction) = self.pending_direction {
+            self.pending_direction = None;
+            self.snake.set_direction(direction);
+        };
         self.snake.traverse(&self.grid);
         if self.snake.eats(&self.food) {
             self.score += self.food.points();
@@ -122,6 +127,7 @@ impl<'a> Game<'a> {
         let mut game = Game {
             gl: GlGraphics::new(opengl),
             font_cache: font_cache,
+            pending_direction: None,
             grid: grid,
             snake: snake,
             food: food,
