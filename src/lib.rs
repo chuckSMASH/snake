@@ -1,3 +1,9 @@
+// TODO: fewer magical constants (esp in Game.on_render
+// TODO: more tests
+// TODO: make snake skinnier than grid so you can see
+//       gaps between snake squares when it is coiled
+// TODO: variable food
+
 extern crate piston;
 extern crate rand;
 extern crate graphics;
